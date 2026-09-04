@@ -1,26 +1,23 @@
 """Resources: compute requirements of Tasks."""
 import functools
 import textwrap
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Literal, Union
 
 import colorama
-from typing_extensions import Literal
 
-from sky import clouds
-from sky import global_user_state
-from sky import sky_logging
-from sky import skypilot_config
-from sky import spot
+from sky import clouds, global_user_state, sky_logging, skypilot_config, spot
 from sky.clouds import service_catalog
 from sky.provision import docker_utils
 from sky.skylet import constants
-from sky.utils import accelerator_registry
-from sky.utils import common_utils
-from sky.utils import log_utils
-from sky.utils import resources_utils
-from sky.utils import schemas
-from sky.utils import tpu_utils
-from sky.utils import ux_utils
+from sky.utils import (
+    accelerator_registry,
+    common_utils,
+    log_utils,
+    resources_utils,
+    schemas,
+    tpu_utils,
+    ux_utils,
+)
 
 logger = sky_logging.init_logger(__name__)
 
