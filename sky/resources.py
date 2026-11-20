@@ -1,4 +1,5 @@
 """Resources: compute requirements of Tasks."""
+
 import functools
 import textwrap
 from typing import Dict, List, Optional, Set, Tuple, Union
