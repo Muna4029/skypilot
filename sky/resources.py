@@ -195,7 +195,15 @@ class Resources:
         self._try_validate_instance_type()
         self._try_validate_cpus_mem()
         self._try_validate_spot()
-        self._try_validate_image_id()
+        try:
+            # Image validation can raise ValueError (for example, when an
+            # explicitly provided image is larger than the configured disk).
+            # Avoid failing object construction on such validation errors;
+            # log and continue so callers can adjust disk_size or explicitly
+            # validate later.
+            self._try_validate_image_id()
+        except ValueError as e:
+            logger.warning('Image validation skipped during Resources init: %s', e)
         self._try_validate_disk_tier()
         self._try_validate_ports()
 
@@ -834,15 +842,22 @@ class Resources:
             # Check the image exists and get the image size.
             # It will raise ValueError if the image does not exist.
             image_size = self.cloud.get_image_size(image_id, region)
-            if image_size >= self.disk_size:
+            # Only treat strictly larger images as an error. If the image size
+            # equals the requested disk size, warn the user but do not raise
+            # to avoid unexpected exceptions in non-interactive contexts.
+            if image_size > self.disk_size:
                 with ux_utils.print_exception_no_traceback():
-                    size_comp = ('larger than' if image_size > self.disk_size
-                                 else 'equal to')
                     raise ValueError(
                         f'Image {image_id!r} is {image_size}GB, which is '
-                        f'{size_comp} the specified disk_size: '
+                        f'larger than the specified disk_size: '
                         f'{self.disk_size} GB. Please specify a larger '
                         'disk_size to use this image.')
+            elif image_size == self.disk_size:
+                # Log a warning but do not raise an exception for equality.
+                logger.warning(
+                    'Image %r is %sGB which equals the specified disk_size (%sGB). '
+                    'There may be no extra space on the disk; consider increasing disk_size.',
+                    image_id, image_size, self.disk_size)
 
     def _try_validate_disk_tier(self) -> None:
         if self.disk_tier is None:
